@@ -1,9 +1,4 @@
 
-// Google "gviz" endpoint (works on GitHub Pages)
-const SHEET_ID = "1s5YwjY0KEDlpCALxEJoW9-DOh9jM_GGQCxnBWmMhs50";
-const GVIZ_URL =
-  "https://docs.google.com/spreadsheets/d/1s5YwjY0KEDlpCALxEJoW9-DOh9jM_GGQCxnBWmMhs50/edit?usp=sharing";
-
 
 const els = {
   status: document.getElementById("status"),
@@ -29,6 +24,8 @@ const els = {
   activityDraw: document.getElementById("activityDraw"),
 };
 
+const DATA_URL = "./data.csv";
+
 let lists = {
   themes: [],
   food: [],
@@ -41,9 +38,98 @@ let matchMode = null; // "yes" or "no"
 function setStatus(msg) { els.status.textContent = msg; }
 function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-function gvizTextToJson(text) {
-  return JSON.parse(text.substring(47, text.length - 2));
+function parseCSV(text) {
+  const rows = [];
+  let row = [];
+  let cur = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    const next = text[i + 1];
+
+    if (c === '"' && inQuotes && next === '"') {
+      cur += '"';
+      i++;
+      continue;
+    }
+    if (c === '"') {
+      inQuotes = !inQuotes;
+      continue;
+    }
+    if (c === "," && !inQuotes) {
+      row.push(cur);
+      cur = "";
+      continue;
+    }
+    if ((c === "\n" || c === "\r") && !inQuotes) {
+      if (cur.length || row.length) row.push(cur);
+      if (row.length) rows.push(row.map(x => x.trim()));
+      row = [];
+      cur = "";
+      continue;
+    }
+    cur += c;
+  }
+
+  if (cur.length || row.length) {
+    row.push(cur);
+    rows.push(row.map(x => x.trim()));
+  }
+
+  return rows.filter(r => r.some(cell => cell && cell.length));
 }
+
+function buildListsFromRows(rows) {
+  const header = rows[0].map(h => (h || "").toLowerCase().trim());
+
+  const idxThemes = header.findIndex(h => h.startsWith("themes") || h === "theme");
+  const idxFood = header.findIndex(h => h.startsWith("food"));
+  const idxDress = header.findIndex(h => h.startsWith("dress"));
+  const idxActivity = header.findIndex(h => h.startsWith("activity"));
+
+  if (idxThemes === -1 || idxFood === -1 || idxDress === -1 || idxActivity === -1) {
+    throw new Error("CSV headers must be: Themes, Food, Dress, Activity");
+  }
+
+  const themes = [];
+  const food = [];
+  const dress = [];
+  const activity = [];
+
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (r[idxThemes]) themes.push(r[idxThemes]);
+    if (r[idxFood]) food.push(r[idxFood]);
+    if (r[idxDress]) dress.push(r[idxDress]);
+    if (r[idxActivity]) activity.push(r[idxActivity]);
+  }
+
+  const uniq = arr => Array.from(new Set(arr));
+  return {
+    themes: uniq(themes),
+    food: uniq(food),
+    dress: uniq(dress),
+    activity: uniq(activity),
+  };
+}
+
+async function loadData() {
+  setStatus("Loading data.csv...");
+  const res = await fetch(DATA_URL);
+  if (!res.ok) throw new Error(`Could not load data.csv (HTTP ${res.status})`);
+  const text = await res.text();
+  const rows = parseCSV(text);
+  lists = buildListsFromRows(rows);
+
+  setStatus(
+    `Loaded: ${lists.themes.length} themes, ` +
+    `${lists.food.length} foods, ` +
+    `${lists.dress.length} dress options, ` +
+    `${lists.activity.length} activities.`
+  );
+}
+
 
 function normalizeHeader(h) {
   return String(h || "").trim().toLowerCase();
@@ -164,24 +250,7 @@ function buildListsFromTable(table) {
   };
 }
 
-async function loadSheet() {
-  setStatus("Loading your Google Sheet...");
-  const res = await fetch(GVIZ_URL);
-  const text = await res.text();
-  const json = gvizTextToJson(text);
-  const table = json.table;
 
-  lists = buildListsFromTable(table);
-
-  if (!lists.themes.length) {
-    setStatus("No themes found. Make sure the Themes column has values and the sheet is published.");
-    return;
-  }
-
-  setStatus(
-    `Loaded: ${lists.themes.length} themes, ${lists.food.length} foods, ${lists.dress.length} dress options, ${lists.activity.length} activities.`
-  );
-}
 
 // Hook up UI
 els.themeDraw.addEventListener("click", drawTheme);
@@ -197,7 +266,7 @@ showMatchedUI(false);
 showIndependentUI(false);
 setActiveToggle(null);
 
-loadSheet().catch(err => {
+loadData().catch(err => {
   console.error(err);
   setStatus("Error: " + (err?.message || err));
 });
