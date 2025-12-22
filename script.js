@@ -80,17 +80,6 @@ function parseCSV(text) {
   return rows.filter(r => r.some(cell => cell && cell.length));
 }
 
-function buildListsFromRows(rows) {
-  const header = rows[0].map(h => (h || "").toLowerCase().trim());
-
-  const idxThemes = header.findIndex(h => h.startsWith("themes") || h === "theme");
-  const idxFood = header.findIndex(h => h.startsWith("food"));
-  const idxDress = header.findIndex(h => h.startsWith("dress"));
-  const idxActivity = header.findIndex(h => h.startsWith("activity"));
-
-  if (idxThemes === -1 || idxFood === -1 || idxDress === -1 || idxActivity === -1) {
-    throw new Error("CSV headers must be: Themes, Food, Dress, Activity");
-  }
 
   const themes = [];
   const food = [];
