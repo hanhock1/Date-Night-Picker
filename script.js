@@ -1,7 +1,8 @@
 
 // Google "gviz" endpoint (works on GitHub Pages)
+const SHEET_ID = "1s5YwjY0KEDlpCALxEJoW9-DOh9jM_GGQCxnBWmMhs50";
 const GVIZ_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ9J6rF_NytocrHsjYm_dm3nRV1esd2IhhZ_D6P5lDjotmfV_Cv97XO_DwWo9bY8-uA6FoDdwp4gIkD/gviz/tq?tqx=out:json";
+  "https://docs.google.com/spreadsheets/d/1s5YwjY0KEDlpCALxEJoW9-DOh9jM_GGQCxnBWmMhs50/edit?usp=sharing";
 
 
 const els = {
