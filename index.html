@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Date Night Picker</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="wrap">
+    <h1 class="title">Date Night Picker</h1>
+
+    <!-- THEME -->
+    <section class="picker">
+      <div class="label">Theme:</div>
+      <div class="row">
+        <div id="themeBox" class="box">—</div>
+        <button id="themeDraw" class="btn">Draw</button>
+      </div>
+
+      <div class="question">
+        <div class="qtext">Do you want the food and dress to match the theme?</div>
+        <div class="toggle">
+          <button id="matchYes" class="pill">Yes</button>
+          <button id="matchNo" class="pill">No</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOD + DRESS (MATCHED) -->
+    <section id="matchedSection" class="grid2 hidden">
+      <div class="picker">
+        <div class="label">Food:</div>
+        <div class="row">
+          <div id="foodMatchedBox" class="box">—</div>
+          <button class="btn btn-disabled" disabled>Draw</button>
+        </div>
+      </div>
+
+      <div class="picker">
+        <div class="label">Dress:</div>
+        <div class="row">
+          <div id="dressMatchedBox" class="box">—</div>
+          <button class="btn btn-disabled" disabled>Draw</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOD + DRESS (INDEPENDENT, only shows when "No") -->
+    <section id="independentSection" class="grid2 hidden">
+      <div class="picker">
+        <div class="label">Food:</div>
+        <div class="row">
+          <div id="foodBox" class="box">—</div>
+          <button id="foodDraw" class="btn">Draw</button>
+        </div>
+      </div>
+
+      <div class="picker">
+        <div class="label">Dress:</div>
+        <div class="row">
+          <div id="dressBox" class="box">—</div>
+          <button id="dressDraw" class="btn">Draw</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ACTIVITY -->
+    <section class="picker">
+      <div class="label">Activity:</div>
+      <div class="row">
+        <div id="activityBox" class="box">—</div>
+        <button id="activityDraw" class="btn">Draw</button>
+      </div>
+    </section>
+
+    <p id="status" class="status"></p>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
