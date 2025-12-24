@@ -1,4 +1,4 @@
-
+// script.js — CSV-backed picker (no Google Sheets / no JSON)
 
 const els = {
   status: document.getElementById("status"),
@@ -26,18 +26,52 @@ const els = {
 
 const DATA_URL = "./data.csv";
 
-let lists = {
-  themes: [],
-  food: [],
-  dress: [],
-  activity: []
-};
+let lists = { themes: [], food: [], dress: [], activity: [] };
+let matchMode = null; // "yes" | "no" | null
 
-let matchMode = null; // "yes" or "no"
+function setStatus(msg) {
+  if (els.status) els.status.textContent = msg;
+}
 
-function setStatus(msg) { els.status.textContent = msg; }
-function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function pickRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
 
+function setActiveToggle(which) {
+  els.matchYes.classList.toggle("active", which === "yes");
+  els.matchNo.classList.toggle("active", which === "no");
+}
+
+function showMatchedUI(show) {
+  els.matchedSection.classList.toggle("hidden", !show);
+}
+
+function showIndependentUI(show) {
+  els.independentSection.classList.toggle("hidden", !show);
+}
+
+function getThemeText() {
+  const t = (els.themeBox.textContent || "").trim();
+  return t === "—" ? "" : t;
+}
+
+function applyMatchedFoodDress() {
+  const theme = getThemeText();
+  els.foodMatchedBox.textContent = theme || "—";
+  els.dressMatchedBox.textContent = theme || "—";
+}
+
+function resetIndependentBoxes() {
+  els.foodBox.textContent = "—";
+  els.dressBox.textContent = "—";
+}
+
+function resetMatchedBoxes() {
+  els.foodMatchedBox.textContent = "—";
+  els.dressMatchedBox.textContent = "—";
+}
+
+// Robust-ish CSV parser (handles quoted fields + commas inside quotes)
 function parseCSV(text) {
   const rows = [];
   let row = [];
@@ -63,8 +97,13 @@ function parseCSV(text) {
       continue;
     }
     if ((c === "\n" || c === "\r") && !inQuotes) {
-      if (cur.length || row.length) row.push(cur);
-      if (row.length) rows.push(row.map(x => x.trim()));
+      // swallow CRLF
+      if (c === "\r" && next === "\n") i++;
+
+      row.push(cur);
+      if (row.some(cell => cell.trim().length > 0)) {
+        rows.push(row.map(x => x.trim()));
+      }
       row = [];
       cur = "";
       continue;
@@ -72,14 +111,30 @@ function parseCSV(text) {
     cur += c;
   }
 
+  // last line
   if (cur.length || row.length) {
     row.push(cur);
-    rows.push(row.map(x => x.trim()));
+    if (row.some(cell => cell.trim().length > 0)) {
+      rows.push(row.map(x => x.trim()));
+    }
   }
-
-  return rows.filter(r => r.some(cell => cell && cell.length));
+  return rows;
 }
 
+function buildListsFromRows(rows) {
+  if (!rows.length) throw new Error("data.csv is empty.");
+
+  const header = rows[0].map(h => (h || "").trim().toLowerCase());
+
+  // Your file has "Themes " (extra space) — trimming fixes it.
+  const idxThemes = header.findIndex(h => h === "themes" || h === "theme");
+  const idxFood = header.findIndex(h => h === "food");
+  const idxDress = header.findIndex(h => h === "dress");
+  const idxActivity = header.findIndex(h => h === "activity");
+
+  if (idxThemes === -1 || idxFood === -1 || idxDress === -1 || idxActivity === -1) {
+    throw new Error("CSV headers must include: Themes, Food, Dress, Activity");
+  }
 
   const themes = [];
   const food = [];
@@ -88,10 +143,16 @@ function parseCSV(text) {
 
   for (let i = 1; i < rows.length; i++) {
     const r = rows[i];
-    if (r[idxThemes]) themes.push(r[idxThemes]);
-    if (r[idxFood]) food.push(r[idxFood]);
-    if (r[idxDress]) dress.push(r[idxDress]);
-    if (r[idxActivity]) activity.push(r[idxActivity]);
+
+    const t = (r[idxThemes] || "").trim();
+    const f = (r[idxFood] || "").trim();
+    const d = (r[idxDress] || "").trim();
+    const a = (r[idxActivity] || "").trim();
+
+    if (t) themes.push(t);
+    if (f) food.push(f);
+    if (d) dress.push(d);
+    if (a) activity.push(a);
   }
 
   const uniq = arr => Array.from(new Set(arr));
@@ -105,65 +166,31 @@ function parseCSV(text) {
 
 async function loadData() {
   setStatus("Loading data.csv...");
-  const res = await fetch(DATA_URL);
+  const res = await fetch(DATA_URL, { cache: "no-store" });
   if (!res.ok) throw new Error(`Could not load data.csv (HTTP ${res.status})`);
+
   const text = await res.text();
+
+  // If this ever triggers, your fetch is hitting an HTML page, not the CSV file.
+  if (text.toLowerCase().includes("<html")) {
+    throw new Error("Fetched HTML instead of CSV. Confirm data.csv is in the repo root.");
+  }
+
   const rows = parseCSV(text);
   lists = buildListsFromRows(rows);
 
   setStatus(
-    `Loaded: ${lists.themes.length} themes, ` +
-    `${lists.food.length} foods, ` +
-    `${lists.dress.length} dress options, ` +
-    `${lists.activity.length} activities.`
+    `Loaded: ${lists.themes.length} themes, ${lists.food.length} foods, ` +
+    `${lists.dress.length} dress options, ${lists.activity.length} activities.`
   );
-}
-
-
-function normalizeHeader(h) {
-  return String(h || "").trim().toLowerCase();
-}
-
-function cleanCell(v) {
-  if (v === null || v === undefined) return "";
-  return String(v).trim();
-}
-
-function setActiveToggle(which) {
-  els.matchYes.classList.toggle("active", which === "yes");
-  els.matchNo.classList.toggle("active", which === "no");
-}
-
-function showMatchedUI(show) {
-  els.matchedSection.classList.toggle("hidden", !show);
-}
-
-function showIndependentUI(show) {
-  els.independentSection.classList.toggle("hidden", !show);
-}
-
-function currentThemeText() {
-  const t = (els.themeBox.textContent || "").trim();
-  return (t === "—" ? "" : t);
-}
-
-// If match mode is YES, copy Theme into Food/Dress boxes
-function applyMatchedFoodDress() {
-  const theme = currentThemeText();
-  els.foodMatchedBox.textContent = theme || "—";
-  els.dressMatchedBox.textContent = theme || "—";
 }
 
 // Draw actions
 function drawTheme() {
   if (!lists.themes.length) return;
-  const theme = pickRandom(lists.themes);
-  els.themeBox.textContent = theme;
+  els.themeBox.textContent = pickRandom(lists.themes);
 
-  // If matching, copy theme down immediately
-  if (matchMode === "yes") {
-    applyMatchedFoodDress();
-  }
+  if (matchMode === "yes") applyMatchedFoodDress();
 }
 
 function drawFood() {
@@ -187,6 +214,7 @@ function onMatchYes() {
   setActiveToggle("yes");
   showIndependentUI(false);
   showMatchedUI(true);
+  resetIndependentBoxes();
   applyMatchedFoodDress();
 }
 
@@ -195,51 +223,8 @@ function onMatchNo() {
   setActiveToggle("no");
   showMatchedUI(false);
   showIndependentUI(true);
+  resetMatchedBoxes();
 }
-
-// Build lists from the sheet table (treat each column as its own independent list)
-function buildListsFromTable(table) {
-  const headers = table.cols.map(c => normalizeHeader(c.label));
-
-  const idxThemes = headers.findIndex(h => h.startsWith("themes") || h === "theme");
-  const idxFood = headers.findIndex(h => h.startsWith("food"));
-  const idxDress = headers.findIndex(h => h.startsWith("dress"));
-  const idxActivity = headers.findIndex(h => h.startsWith("activity"));
-
-  if (idxThemes === -1) throw new Error("Could not find a 'Themes' column header.");
-  if (idxFood === -1) throw new Error("Could not find a 'Food' column header.");
-  if (idxDress === -1) throw new Error("Could not find a 'Dress' column header.");
-  if (idxActivity === -1) throw new Error("Could not find an 'Activity' column header.");
-
-  const themes = [];
-  const food = [];
-  const dress = [];
-  const activity = [];
-
-  for (const r of table.rows) {
-    const cells = r.c || [];
-    const t = cleanCell(cells[idxThemes]?.v);
-    const f = cleanCell(cells[idxFood]?.v);
-    const d = cleanCell(cells[idxDress]?.v);
-    const a = cleanCell(cells[idxActivity]?.v);
-
-    if (t) themes.push(t);
-    if (f) food.push(f);
-    if (d) dress.push(d);
-    if (a) activity.push(a);
-  }
-
-  // remove duplicates (optional but nice)
-  const uniq = arr => Array.from(new Set(arr));
-  return {
-    themes: uniq(themes),
-    food: uniq(food),
-    dress: uniq(dress),
-    activity: uniq(activity),
-  };
-}
-
-
 
 // Hook up UI
 els.themeDraw.addEventListener("click", drawTheme);
@@ -251,6 +236,11 @@ els.matchYes.addEventListener("click", onMatchYes);
 els.matchNo.addEventListener("click", onMatchNo);
 
 // Initial UI state
+els.themeBox.textContent = "—";
+els.activityBox.textContent = "—";
+resetIndependentBoxes();
+resetMatchedBoxes();
+
 showMatchedUI(false);
 showIndependentUI(false);
 setActiveToggle(null);
