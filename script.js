@@ -84,7 +84,7 @@ function setRandomCollage(){
 
   // don’t block initial render
   requestAnimationFrame(() => {
-    bg.style.backgroundImage = chosen.map(n => `url("images/${n}")`).join(", ");
+    bg.style.backgroundImage = chosen.map(n => `url("${n}")`).join(", ");
     bg.style.backgroundSize = `${100/cols}% ${100/rows}%`;
   });
 }
@@ -315,3 +315,4 @@ loadData().catch(err => {
   console.error(err);
   setStatus("Error: " + (err?.message || err));
 });
+
