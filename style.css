@@ -150,3 +150,6 @@ body{
   background-repeat: repeat;
   filter: saturate(0.95) contrast(0.95);
 }
+body{ background: transparent; }
+#bgCollage{ z-index: 0; }
+.wrap{ position: relative; z-index: 1; }
