@@ -75,18 +75,18 @@ function setRandomCollage(){
   shuffle(images);
 
   // pick between 6–9 images each load
-  const pick = 6 + Math.floor(Math.random() * 4);
+ const pick = 6;
   const chosen = images.slice(0, pick);
 
-  const cols = Math.ceil(Math.sqrt(pick));
-  const rows = Math.ceil(pick / cols);
+  const cols = 3, rows = 2;
 
   const bg = document.getElementById("bgCollage");
-  bg.style.backgroundImage = chosen
-    .map(name => `url("images/${name}")`)
-    .join(", ");
 
-  bg.style.backgroundSize = `${100/cols}% ${100/rows}%`;
+  // don’t block initial render
+  requestAnimationFrame(() => {
+    bg.style.backgroundImage = chosen.map(n => `url("images/${n}")`).join(", ");
+    bg.style.backgroundSize = `${100/cols}% ${100/rows}%`;
+  });
 }
 
 setRandomCollage();

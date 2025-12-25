@@ -146,7 +146,7 @@ body{
   z-index: -1;
   pointer-events: none;
 
-  opacity: 0.16;
+  opacity: 0.12;
   background-repeat: repeat;
   filter: saturate(0.95) contrast(0.95);
 }
