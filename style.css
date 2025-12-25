@@ -143,13 +143,10 @@ body{
 #bgCollage{
   position: fixed;
   inset: 0;
-  z-index: -1;
+  z-index: 0;
   pointer-events: none;
-
-  opacity: 0.12;
-  background-repeat: repeat;
   filter: saturate(0.95) contrast(0.95);
 }
+
 body{ background: transparent; }
-#bgCollage{ z-index: 0; }
 .wrap{ position: relative; z-index: 1; }
