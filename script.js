@@ -32,6 +32,7 @@ function shuffle(arr){
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
 }
+const IMG_BASE = "https://hanhock1.github.io/Date-Night-Picker/";
 
 function setRandomCollage(){
   const images = [
@@ -74,7 +75,7 @@ function setRandomCollage(){
 
   shuffle(images);
 
-  // pick between 6–9 images each load
+  // pick between 6 images each load
  const pick = 6;
   const chosen = images.slice(0, pick);
 
@@ -84,7 +85,9 @@ function setRandomCollage(){
 
   // don’t block initial render
   requestAnimationFrame(() => {
-    bg.style.backgroundImage = chosen.map(n => `url("${n}")`).join(", ");
+    bg.style.backgroundImage = chosen
+    .map(name => `url("${IMG_BASE}${encodeURIComponent(name)}")`)
+    .join(", ");
     bg.style.backgroundSize = `${100/cols}% ${100/rows}%`;
   });
 }
@@ -315,4 +318,3 @@ loadData().catch(err => {
   console.error(err);
   setStatus("Error: " + (err?.message || err));
 });
-
