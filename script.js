@@ -26,6 +26,72 @@ const els = {
 
 const DATA_URL = "./data.csv";
 
+function shuffle(arr){
+  for(let i = arr.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
+function setRandomCollage(){
+  const images = [
+    "1afa9d87-9c12-422e-ac52-862ee0cba8b8.jpg",
+    "5D64189F-EE79-4BFC-821F-8EAD83B0522C.jpg",
+    "a21ba214-cc73-4ee4-bc76-21693329f8dd.jpg",
+    "IMG_0312.jpg",
+    "IMG_0540.jpg",
+    "IMG_0682.jpg",
+    "IMG_0725.jpg",
+    "IMG_0783.jpg",
+    "IMG_0833.jpg",
+    "IMG_2141.jpg",
+    "IMG_3616.jpg",
+    "IMG_3623.jpg",
+    "IMG_3843.jpg",
+    "IMG_3904.jpg",
+    "IMG_4033.jpg",
+    "IMG_4130.jpg",
+    "IMG_4417.jpg",
+    "IMG_4716.jpg",
+    "IMG_5070.jpg",
+    "IMG_5090.jpg",
+    "IMG_5107.jpg",
+    "IMG_5115.jpg",
+    "IMG_5351.jpg",
+    "IMG_5375.jpg",
+    "IMG_5944.jpg",
+    "IMG_5950.jpg",
+    "IMG_6005.jpg",
+    "IMG_6029.jpg",
+    "IMG_6052.jpg",
+    "IMG_6284.jpg",
+    "IMG_6820.jpg",
+    "IMG_6851.jpg",
+    "IMG_6867.jpg",
+    "IMG_8499.jpg",
+    "P1120708_Original.jpg"
+  ];
+
+  shuffle(images);
+
+  // pick between 6–9 images each load
+  const pick = 6 + Math.floor(Math.random() * 4);
+  const chosen = images.slice(0, pick);
+
+  const cols = Math.ceil(Math.sqrt(pick));
+  const rows = Math.ceil(pick / cols);
+
+  const bg = document.getElementById("bgCollage");
+  bg.style.backgroundImage = chosen
+    .map(name => `url("images/${name}")`)
+    .join(", ");
+
+  bg.style.backgroundSize = `${100/cols}% ${100/rows}%`;
+}
+
+setRandomCollage();
+
+
 let lists = { themes: [], food: [], dress: [], activity: [] };
 let matchMode = null; // "yes" | "no" | null
 
